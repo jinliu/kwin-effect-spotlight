@@ -1,5 +1,5 @@
 /*
-    SPDX-FileCopyrightText: 2023 Vlad Zahorodnii <vlad.zahorodnii@kde.org>
+    SPDX-FileCopyrightText: 2024 Jin Liu <m.liu.jin@gmail.com>
 
     SPDX-License-Identifier: GPL-2.0-or-later
 */
@@ -20,7 +20,7 @@
 namespace KWin
 {
 
-const int TEXTURE_MARGIN = 10;
+const int TEXTURE_PADDING = 10;
 
 SpotlightEffect::SpotlightEffect()
 {
@@ -38,7 +38,7 @@ SpotlightEffect::SpotlightEffect()
     m_effectStopTimer.setSingleShot(true);
     connect(&m_effectStopTimer, &QTimer::timeout, this, [this]() {
         m_isActive = false;
-        m_furthestDistanceToScreenCorner = -1;
+        updateMaxScale();
         m_outAnimation.setStartValue(0.0);
         m_outAnimation.setEndValue(1.0);
         m_outAnimation.setDuration(m_animationTime);
@@ -78,11 +78,11 @@ void SpotlightEffect::reconfigure(ReconfigureFlags flags)
     m_shakeDetector.setInterval(SpotlightConfig::timeInterval());
     m_shakeDetector.setSensitivity(SpotlightConfig::sensitivity());
 
-    const int imageSize = (m_spotlightRadius + TEXTURE_MARGIN) * 2;
+    const int imageSize = (m_spotlightRadius + TEXTURE_PADDING) * 2;
     QImage image(imageSize, imageSize, QImage::Format_ARGB32);
     QPainter painter(&image);
-    painter.setRenderHint(QPainter::RenderHint::Antialiasing);
 
+    painter.setRenderHint(QPainter::RenderHint::Antialiasing);
     painter.fillRect(image.rect(), QColor(0, 0, 0));
 
     QBrush brush;
@@ -95,6 +95,7 @@ void SpotlightEffect::reconfigure(ReconfigureFlags flags)
     m_spotlightTexture = GLTexture::upload(image);
     m_spotlightTexture->setWrapMode(GL_CLAMP_TO_EDGE);
     m_spotlightTexture->setFilter(GL_LINEAR);
+
     qDebug() << "SpotlightEffect::reconfigure() success";
 }
 
@@ -113,12 +114,12 @@ void SpotlightEffect::pointerEvent(MouseEvent *event)
         if (!m_isActive) {
             qDebug() << "SpotlightEffect::activated";
             m_isActive = true;
+            updateMaxScale();
             qreal start = 1.0;
             if (m_outAnimation.state() == QVariantAnimation::Running) {
                 start = m_outAnimation.currentValue().toReal();
                 m_outAnimation.stop();
             }
-            m_furthestDistanceToScreenCorner = -1;
             m_inAnimation.setStartValue(start);
             m_inAnimation.setEndValue(0.0);
             m_inAnimation.setDuration(m_animationTime * start);
@@ -142,16 +143,11 @@ void SpotlightEffect::paintScreen(const RenderTarget &renderTarget, const Render
         return;
 
     QRectF screenGeometry = screen->geometry();
+    center -= screenGeometry.topLeft();
 
-    if (m_furthestDistanceToScreenCorner < 0) {
-        qreal x = qMax(center.x() - screenGeometry.x(), screenGeometry.x() + screenGeometry.width() - center.x());
-        qreal y = qMax(center.y() - screenGeometry.y(), screenGeometry.y() + screenGeometry.height() - center.y());
-        m_furthestDistanceToScreenCorner = qSqrt(x * x + y * y);
-    }
-
-    qreal scale = 1 / (m_animationValue * (m_furthestDistanceToScreenCorner / m_spotlightRadius) + 1 - m_animationValue);
-    QRectF source = QRectF(-center.x() * scale + TEXTURE_MARGIN + m_spotlightRadius,
-                           -center.y() * scale + TEXTURE_MARGIN + m_spotlightRadius,
+    qreal scale = 1 / (m_animationValue * m_maxScale + 1 - m_animationValue);
+    QRectF source = QRectF(-center.x() * scale + TEXTURE_PADDING + m_spotlightRadius,
+                           -center.y() * scale + TEXTURE_PADDING + m_spotlightRadius,
                            screenGeometry.width() * scale,
                            screenGeometry.height() * scale);
     QRectF fullscreen = viewport.renderRect();
@@ -174,9 +170,20 @@ void SpotlightEffect::paintScreen(const RenderTarget &renderTarget, const Render
     glDisable(GL_BLEND);
     if (clipping) {
         glDisable(GL_SCISSOR_TEST);
-    }    
+    }
 
     ShaderManager::instance()->popShader();
+}
+
+void SpotlightEffect::updateMaxScale()
+{
+    QPointF center = cursorPos();
+    QRectF screenGeometry = effects->screenAt(center.toPoint())->geometry();
+    center -= screenGeometry.topLeft();
+    qreal x = qMax(center.x(), screenGeometry.width() - center.x());
+    qreal y = qMax(center.y(), screenGeometry.height() - center.y());
+    qreal furthestDistanceToScreenCorner = qSqrt(x * x + y * y);
+    m_maxScale = furthestDistanceToScreenCorner / m_spotlightRadius;
 }
 
 } // namespace KWin

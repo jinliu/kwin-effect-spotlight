@@ -1,5 +1,5 @@
 /*
-    SPDX-FileCopyrightText: 2023 Vlad Zahorodnii <vlad.zahorodnii@kde.org>
+    SPDX-FileCopyrightText: 2024 Jin Liu <m.liu.jin@gmail.com>
 
     SPDX-License-Identifier: GPL-2.0-or-later
 */
@@ -37,6 +37,8 @@ public:
     void paintScreen(const RenderTarget &renderTarget, const RenderViewport &viewport, int mask, const QRegion &region, Output *screen) override;
 
 private:
+    void updateMaxScale();
+
     // configuration
     int m_animationTime;
     int m_effectTimeout;
@@ -47,9 +49,8 @@ private:
     QTimer m_effectStopTimer;
     QVariantAnimation m_inAnimation;
     QVariantAnimation m_outAnimation;
-    qreal m_animationValue; // factor of the animation from screenRadius to the target (1.0 to 0.0)
-
-    qreal m_furthestDistanceToScreenCorner; // distance from the pointer to the furthest corner of the screen
+    qreal m_animationValue; // value of the animation, from 1.0 (largest circle) to 0.0 (smallest circle)
+    qreal m_maxScale; // max scale of the spotlight texture, corrsponding to m_animationValue=1.0
 
     std::unique_ptr<GLTexture> m_spotlightTexture;
 
