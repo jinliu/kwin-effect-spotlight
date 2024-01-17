@@ -20,6 +20,8 @@
 namespace KWin
 {
 
+const int TEXTURE_MARGIN = 10;
+
 SpotlightEffect::SpotlightEffect()
 {
     input()->installInputEventSpy(this);
@@ -36,7 +38,7 @@ SpotlightEffect::SpotlightEffect()
     m_effectStopTimer.setSingleShot(true);
     connect(&m_effectStopTimer, &QTimer::timeout, this, [this]() {
         m_isActive = false;
-        m_screenRadius = -1;
+        m_furthestDistanceToScreenCorner = -1;
         m_outAnimation.setStartValue(0.0);
         m_outAnimation.setEndValue(1.0);
         m_outAnimation.setDuration(m_animationTime);
@@ -76,8 +78,8 @@ void SpotlightEffect::reconfigure(ReconfigureFlags flags)
     m_shakeDetector.setInterval(SpotlightConfig::timeInterval());
     m_shakeDetector.setSensitivity(SpotlightConfig::sensitivity());
 
-    const int imageSize = m_spotlightRadius * 4;
-    QImage image(imageSize, imageSize, QImage::Format_RGB32);
+    const int imageSize = (m_spotlightRadius + TEXTURE_MARGIN) * 2;
+    QImage image(imageSize, imageSize, QImage::Format_ARGB32);
     QPainter painter(&image);
     painter.setRenderHint(QPainter::RenderHint::Antialiasing);
 
@@ -87,7 +89,6 @@ void SpotlightEffect::reconfigure(ReconfigureFlags flags)
     brush.setStyle(Qt::SolidPattern);
     brush.setColor(QColor(255, 255, 255));
     painter.setBrush(brush);
-    painter.setCompositionMode(QPainter::CompositionMode_Source);
     painter.drawEllipse(image.rect().center(), m_spotlightRadius, m_spotlightRadius);
 
     m_spotlightTexture.reset();
@@ -117,7 +118,7 @@ void SpotlightEffect::pointerEvent(MouseEvent *event)
                 start = m_outAnimation.currentValue().toReal();
                 m_outAnimation.stop();
             }
-            m_screenRadius = -1;
+            m_furthestDistanceToScreenCorner = -1;
             m_inAnimation.setStartValue(start);
             m_inAnimation.setEndValue(0.0);
             m_inAnimation.setDuration(m_animationTime * start);
@@ -135,59 +136,47 @@ void SpotlightEffect::paintScreen(const RenderTarget &renderTarget, const Render
 {
     effects->paintScreen(renderTarget, viewport, mask, region, screen);
 
-    QPoint center = cursorPos().toPoint();
+    QPointF center = cursorPos();
 
-    if (screen != effects->screenAt(center))
+    if (screen != effects->screenAt(center.toPoint()))
         return;
 
-    if (m_screenRadius < 0) {
-        int x = qMax(center.x(), screen->geometry().width() - center.x());
-        int y = qMax(center.y(), screen->geometry().height() - center.y());
-        m_screenRadius = qSqrt(x * x + y * y);
+    QRectF screenGeometry = screen->geometry();
+
+    if (m_furthestDistanceToScreenCorner < 0) {
+        qreal x = qMax(center.x() - screenGeometry.x(), screenGeometry.x() + screenGeometry.width() - center.x());
+        qreal y = qMax(center.y() - screenGeometry.y(), screenGeometry.y() + screenGeometry.height() - center.y());
+        m_furthestDistanceToScreenCorner = qSqrt(x * x + y * y);
     }
 
-    const auto rect = viewport.renderRect().toRect();
+    qreal scale = 1 / (m_animationValue * (m_furthestDistanceToScreenCorner / m_spotlightRadius) + 1 - m_animationValue);
+    QRectF source = QRectF(-center.x() * scale + TEXTURE_MARGIN + m_spotlightRadius,
+                           -center.y() * scale + TEXTURE_MARGIN + m_spotlightRadius,
+                           screenGeometry.width() * scale,
+                           screenGeometry.height() * scale);
+    QRectF fullscreen = viewport.renderRect();
+    fullscreen.setSize(fullscreen.size() * viewport.scale());
+
+    auto shader = ShaderManager::instance()->pushShader(ShaderTrait::MapTexture | ShaderTrait::TransformColorspace);
+    shader->setColorspaceUniformsFromSRGB(renderTarget.colorDescription());
+    QMatrix4x4 mvp = viewport.projectionMatrix();
+    shader->setUniform(GLShader::ModelViewProjectionMatrix, mvp);
+
     const bool clipping = region != infiniteRegion();
     const QRegion clipRegion = clipping ? viewport.mapToRenderTarget(region) : infiniteRegion();
     if (clipping) {
         glEnable(GL_SCISSOR_TEST);
     }
-
-    int r = circleRadius();
-    float alpha = 0.5f * (1.0f - m_animationValue);
     glEnable(GL_BLEND);
-    glBlendColor(0.0f, 0.0f, 0.0f, alpha);
+    glBlendColor(0.0f, 0.0f, 0.0f, 0.5f * (1.0f - m_animationValue));
     glBlendFunc(GL_CONSTANT_ALPHA, GL_ONE_MINUS_CONSTANT_ALPHA);
-    auto shader = ShaderManager::instance()->pushShader(ShaderTrait::MapTexture | ShaderTrait::TransformColorspace);
-    shader->setColorspaceUniformsFromSRGB(renderTarget.colorDescription());
-    QMatrix4x4 mvp = viewport.projectionMatrix();
-    // mvp.scale(double(r) / m_spotlightRadius);
-    mvp.translate((circleX() - r * 2) * viewport.scale(), (circleY() - r * 2) * viewport.scale());
-    shader->setUniform(GLShader::ModelViewProjectionMatrix, mvp);
-    QSizeF size(r * 4, r * 4);
-    size *= viewport.scale();
-    m_spotlightTexture->render(clipRegion, size, clipping);
-    ShaderManager::instance()->popShader();
+    m_spotlightTexture->render(source, clipRegion, fullscreen.size(), clipping);
     glDisable(GL_BLEND);
-
     if (clipping) {
         glDisable(GL_SCISSOR_TEST);
-    }
-}
+    }    
 
-int SpotlightEffect::circleX() const
-{
-    return cursorPos().x();
-}
-
-int SpotlightEffect::circleY() const
-{
-    return cursorPos().y();
-}
-
-int SpotlightEffect::circleRadius() const
-{
-    return m_spotlightRadius + (m_screenRadius - m_spotlightRadius) * m_animationValue;
+    ShaderManager::instance()->popShader();
 }
 
 } // namespace KWin

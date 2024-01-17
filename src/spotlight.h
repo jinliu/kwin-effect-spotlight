@@ -36,26 +36,24 @@ public:
     bool isActive() const override;
     void paintScreen(const RenderTarget &renderTarget, const RenderViewport &viewport, int mask, const QRegion &region, Output *screen) override;
 
-    int circleX() const;
-    int circleY() const;
-    int circleRadius() const;
-
 private:
+    // configuration
+    int m_animationTime;
+    int m_effectTimeout;
+    int m_spotlightRadius;
+
     bool m_isActive = false;
 
     QTimer m_effectStopTimer;
-    int m_effectTimeout;
-
     QVariantAnimation m_inAnimation;
     QVariantAnimation m_outAnimation;
-    int m_animationTime;
-    int m_spotlightRadius;
-    int m_screenRadius; // distance from the pointer to the furthest corner of the screen
     qreal m_animationValue; // factor of the animation from screenRadius to the target (1.0 to 0.0)
 
-    ShakeDetector m_shakeDetector;
+    qreal m_furthestDistanceToScreenCorner; // distance from the pointer to the furthest corner of the screen
 
     std::unique_ptr<GLTexture> m_spotlightTexture;
+
+    ShakeDetector m_shakeDetector;
 };
 
 } // namespace KWin

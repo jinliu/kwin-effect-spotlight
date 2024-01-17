@@ -15,10 +15,10 @@
             <default>500</default>
         </entry>
         <entry name="EffectTimeout" type="UInt">
-            <default>3000</default>
+            <default>2000</default>
         </entry>
         <entry name="SpotlightRadius" type="UInt">
-            <default>100</default>
+            <default>50</default>
         </entry>        
     </group>
 </kcfg>
