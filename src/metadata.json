@@ -1,0 +1,10 @@
+{
+    "KPlugin": {
+        "Category": "Accessibility",
+        "Description": "Spotlight on the pointer when it is quickly moved back and forth",
+        "EnabledByDefault": false,
+        "Id": "spotlight",
+        "License": "GPL",
+        "Name": "Spotlight"
+    }
+}
