@@ -160,6 +160,9 @@ void SpotlightEffect::paintScreen(const RenderTarget &renderTarget, const Render
 
     const bool clipping = region != infiniteRegion();
     const QRegion clipRegion = clipping ? viewport.mapToRenderTarget(region) : infiniteRegion();
+
+    qDebug() << "SpotlightEffect::paintScreen() screenGeometry" << screenGeometry << "center" << center << "scale" << 1/scale << "source" << source << "fullscreen" << fullscreen << "clipping" << clipping << "clipRegion" << clipRegion;
+
     if (clipping) {
         glEnable(GL_SCISSOR_TEST);
     }
