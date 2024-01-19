@@ -91,6 +91,12 @@ void SpotlightEffect::reconfigure(ReconfigureFlags flags)
     painter.setBrush(brush);
     painter.drawEllipse(image.rect().center(), m_spotlightRadius, m_spotlightRadius);
 
+    auto style = SpotlightConfig::spotlightStyle();
+    if (style == SpotlightConfig::EnumSpotlightStyle::Crosshair) {
+        painter.drawLine(image.rect().center().x(), 0, image.rect().center().x(), imageSize);
+        painter.drawLine(0, image.rect().center().y(), imageSize, image.rect().center().y());
+    }
+
     m_spotlightTexture.reset();
     m_spotlightTexture = GLTexture::upload(image);
     m_spotlightTexture->setWrapMode(GL_CLAMP_TO_EDGE);
@@ -143,6 +149,9 @@ void SpotlightEffect::paintScreen(const RenderTarget &renderTarget, const Render
         return;
 
     QRectF screenGeometry = screen->geometry();
+
+    qDebug() << "SpotlightEffect::paintScreen() cursorPos" << center << "screenGeometry" << screenGeometry;
+
     center -= screenGeometry.topLeft();
 
     qreal scale = 1 / (m_animationValue * m_maxScale + 1 - m_animationValue);
@@ -161,7 +170,7 @@ void SpotlightEffect::paintScreen(const RenderTarget &renderTarget, const Render
     const bool clipping = region != infiniteRegion();
     const QRegion clipRegion = clipping ? viewport.mapToRenderTarget(region) : infiniteRegion();
 
-    qDebug() << "SpotlightEffect::paintScreen() screenGeometry" << screenGeometry << "center" << center << "scale" << 1/scale << "source" << source << "fullscreen" << fullscreen << "clipping" << clipping << "clipRegion" << clipRegion;
+    qDebug() << "SpotlightEffect::paintScreen() center" << center << "scale" << 1 / scale << "source" << source << "fullscreen" << fullscreen << "clipping" << clipping << "clipRegion" << clipRegion;
 
     if (clipping) {
         glEnable(GL_SCISSOR_TEST);

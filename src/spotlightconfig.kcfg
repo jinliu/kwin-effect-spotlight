@@ -6,19 +6,37 @@
     <kcfgfile arg="true"/>
     <group name="Effect-spotlight">
         <entry name="TimeInterval" type="UInt">
+            <label>Trigger duration</label>
+            <tooltip>Duration that you should keep the mouse moving to trigger this effect</tooltip>
             <default>1000</default>
         </entry>
         <entry name="Sensitivity" type="Double">
             <default>4</default>
         </entry>
         <entry name="AnimationTime" type="UInt">
+            <label>Effect animation time</label>
+            <min>100</min>
             <default>500</default>
         </entry>
         <entry name="EffectTimeout" type="UInt">
+            <label>Effect deactivating timeout</label>
+            <min>100</min>
             <default>2000</default>
         </entry>
         <entry name="SpotlightRadius" type="UInt">
+            <label>Spotlight radius</label>
+            <min>10</min>
             <default>50</default>
-        </entry>        
+        </entry>
+        <entry name="SpotlightStyle" type="Enum">
+        <label>Spotlight style</label>
+        <choices>
+            <choice name="Spotlight">
+            </choice>
+            <choice name="Crosshair">
+            </choice>
+        </choices>
+        <default>0</default>
+      </entry>
     </group>
 </kcfg>
