@@ -82,17 +82,20 @@ void SpotlightEffect::reconfigure(ReconfigureFlags flags)
     QImage image(imageSize, imageSize, QImage::Format_ARGB32);
     QPainter painter(&image);
 
-    painter.setRenderHint(QPainter::RenderHint::Antialiasing);
     painter.fillRect(image.rect(), QColor(0, 0, 0));
 
     QBrush brush;
     brush.setStyle(Qt::SolidPattern);
     brush.setColor(QColor(255, 255, 255));
     painter.setBrush(brush);
+    painter.setRenderHint(QPainter::RenderHint::Antialiasing);
     painter.drawEllipse(image.rect().center(), m_spotlightRadius, m_spotlightRadius);
 
     auto style = SpotlightConfig::spotlightStyle();
     if (style == SpotlightConfig::EnumSpotlightStyle::Crosshair) {
+        QPen pen(QColor(0, 0, 0));
+        painter.setPen(pen);
+        painter.setRenderHint(QPainter::RenderHint::Antialiasing, false);
         painter.drawLine(image.rect().center().x(), 0, image.rect().center().x(), imageSize);
         painter.drawLine(0, image.rect().center().y(), imageSize, image.rect().center().y());
     }
