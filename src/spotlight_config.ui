@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>KWin::SpotlightEffectConfigForm</class>
+ <widget class="QWidget" name="KWin::SpotlightEffectConfigForm">
+  <layout class="QFormLayout" name="formLayout">
+   <property name="fieldGrowthPolicy">
+    <enum>QFormLayout::FieldsStayAtSizeHint</enum>
+   </property>
+   <item row="0" column="0">
+    <widget class="QLabel" name="label">
+     <property name="text">
+      <string>Spotlight style:</string>
+     </property>
+    </widget>
+   </item>
+   <item row="0" column="1">
+    <widget class="QComboBox" name="kcfg_SpotlightStyle">
+     <property name="whatsThis">
+      <string>Spotlight style.</string>
+     </property>
+     <item>
+      <property name="text">
+       <string>Spotlight</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Crosshair</string>
+      </property>
+     </item>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+</ui>

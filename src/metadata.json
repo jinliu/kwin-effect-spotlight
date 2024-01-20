@@ -5,5 +5,6 @@
         "EnabledByDefault": false,
         "License": "GPL",
         "Name": "Spotlight"
-    }
+    },
+    "X-KDE-ConfigModule": "kwin_spotlight_config"
 }
