@@ -1,12 +1,9 @@
 /*
-    KWin - the KDE window manager
-    This file is part of the KDE project.
-
-    SPDX-FileCopyrightText: 2007 Rivo Laks <rivolaks@hot.ee>
-    SPDX-FileCopyrightText: 2010 Jorge Mata <matamax123@gmail.com>
+    SPDX-FileCopyrightText: 2024 Jin Liu <m.liu.jin@gmail.com>
 
     SPDX-License-Identifier: GPL-2.0-or-later
 */
+
 #include "spotlight_config.h"
 
 #include <config-kwin.h>
