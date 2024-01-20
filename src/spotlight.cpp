@@ -62,7 +62,7 @@ SpotlightEffect::~SpotlightEffect()
 
 bool SpotlightEffect::supported()
 {
-    qDebug() << "SpotlightEffect::supported()" << effects->isOpenGLCompositing();
+    // qDebug() << "SpotlightEffect::supported()" << effects->isOpenGLCompositing();
     return effects->isOpenGLCompositing();
 }
 
@@ -153,7 +153,7 @@ void SpotlightEffect::paintScreen(const RenderTarget &renderTarget, const Render
 
     QRectF screenGeometry = screen->geometry();
 
-    qDebug() << "SpotlightEffect::paintScreen() cursorPos" << center << "screenGeometry" << screenGeometry;
+    //qDebug() << "SpotlightEffect::paintScreen() cursorPos" << center << "screenGeometry" << screenGeometry;
 
     center -= screenGeometry.topLeft();
 
@@ -162,8 +162,7 @@ void SpotlightEffect::paintScreen(const RenderTarget &renderTarget, const Render
                            -center.y() * scale + TEXTURE_PADDING + m_spotlightRadius,
                            screenGeometry.width() * scale,
                            screenGeometry.height() * scale);
-    qreal s = viewport.scale();
-    QRectF fullscreen(screenGeometry.topLeft() * s, screenGeometry.size() * s);
+    QRectF fullscreen(screenGeometry.topLeft() * viewport.scale(), screenGeometry.size() * viewport.scale());
 
     auto shader = ShaderManager::instance()->pushShader(ShaderTrait::MapTexture | ShaderTrait::TransformColorspace);
     shader->setColorspaceUniformsFromSRGB(renderTarget.colorDescription());
@@ -174,7 +173,7 @@ void SpotlightEffect::paintScreen(const RenderTarget &renderTarget, const Render
     const bool clipping = region != infiniteRegion();
     const QRegion clipRegion = clipping ? viewport.mapToRenderTarget(region) : infiniteRegion();
 
-    qDebug() << "SpotlightEffect::paintScreen() center" << center << "scale" << 1 / scale << "source" << source << "fullscreen" << fullscreen << "clipping" << clipping << "clipRegion" << clipRegion;
+    // qDebug() << "SpotlightEffect::paintScreen() center" << center << "scale" << 1 / scale << "source" << source << "fullscreen" << fullscreen << "clipping" << clipping << "clipRegion" << clipRegion;
 
     if (clipping) {
         glEnable(GL_SCISSOR_TEST);
