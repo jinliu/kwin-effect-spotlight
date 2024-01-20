@@ -162,12 +162,13 @@ void SpotlightEffect::paintScreen(const RenderTarget &renderTarget, const Render
                            -center.y() * scale + TEXTURE_PADDING + m_spotlightRadius,
                            screenGeometry.width() * scale,
                            screenGeometry.height() * scale);
-    QRectF fullscreen = viewport.renderRect();
-    fullscreen.setSize(fullscreen.size() * viewport.scale());
+    qreal s = viewport.scale();
+    QRectF fullscreen(screenGeometry.topLeft() * s, screenGeometry.size() * s);
 
     auto shader = ShaderManager::instance()->pushShader(ShaderTrait::MapTexture | ShaderTrait::TransformColorspace);
     shader->setColorspaceUniformsFromSRGB(renderTarget.colorDescription());
     QMatrix4x4 mvp = viewport.projectionMatrix();
+    mvp.translate(fullscreen.x(), fullscreen.y());
     shader->setUniform(GLShader::ModelViewProjectionMatrix, mvp);
 
     const bool clipping = region != infiniteRegion();
