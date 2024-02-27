@@ -138,8 +138,9 @@ void SpotlightEffect::pointerEvent(MouseEvent *event)
         }
     }
 
-    if (m_isActive)
+    if (m_isActive) {
         effects->addRepaintFull();
+    }
 }
 
 void SpotlightEffect::paintScreen(const RenderTarget &renderTarget, const RenderViewport &viewport, int mask, const QRegion &region, Output *screen)
@@ -148,12 +149,13 @@ void SpotlightEffect::paintScreen(const RenderTarget &renderTarget, const Render
 
     QPointF center = cursorPos();
 
-    if (screen != effects->screenAt(center.toPoint()))
+    if (screen != effects->screenAt(center.toPoint())) {
         return;
+    }
 
     QRectF screenGeometry = screen->geometry();
 
-    //qDebug() << "SpotlightEffect::paintScreen() cursorPos" << center << "screenGeometry" << screenGeometry;
+    // qDebug() << "SpotlightEffect::paintScreen() cursorPos" << center << "screenGeometry" << screenGeometry;
 
     center -= screenGeometry.topLeft();
 
@@ -168,7 +170,7 @@ void SpotlightEffect::paintScreen(const RenderTarget &renderTarget, const Render
     shader->setColorspaceUniformsFromSRGB(renderTarget.colorDescription());
     QMatrix4x4 mvp = viewport.projectionMatrix();
     mvp.translate(fullscreen.x(), fullscreen.y());
-    shader->setUniform(GLShader::ModelViewProjectionMatrix, mvp);
+    shader->setUniform(GLShader::Mat4Uniform::ModelViewProjectionMatrix, mvp);
 
     const bool clipping = region != infiniteRegion();
     const QRegion clipRegion = clipping ? viewport.mapToRenderTarget(region) : infiniteRegion();

@@ -1,6 +1,10 @@
 # kwin-effect-spotlight
 "Find My Mouse" effect "Spotlight"
 
+## Requirements
+
+KDE Plasma 6.0
+
 ## Installation
 
 Extract the following package into `/usr/lib/qt6/plugins/`:
