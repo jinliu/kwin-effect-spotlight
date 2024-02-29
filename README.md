@@ -8,6 +8,7 @@ KDE Plasma 6.0
 ## Installation
 
 Extract the following package into `/usr/lib/qt6/plugins/`:
+https://github.com/jinliu/kwin-effect-spotlight/archive/refs/tags/v0.1.tar.gz
 
 ## Build
 
