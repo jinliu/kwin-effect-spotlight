@@ -43,7 +43,6 @@ SpotlightEffect::SpotlightEffect()
         m_outAnimation.setEndValue(1.0);
         m_outAnimation.setDuration(m_animationTime);
         m_outAnimation.start();
-        qDebug() << "SpotlightEffect::deactivated";
     });
 
     m_outAnimation.setEasingCurve(QEasingCurve::InOutCubic);
@@ -62,13 +61,15 @@ SpotlightEffect::~SpotlightEffect()
 
 bool SpotlightEffect::supported()
 {
-    // qDebug() << "SpotlightEffect::supported()" << effects->isOpenGLCompositing();
-    return effects->isOpenGLCompositing();
+    return 
+#ifdef KWIN_6_1
+        effects->isWayland() &&
+#endif
+        effects->isOpenGLCompositing();
 }
 
 void SpotlightEffect::reconfigure(ReconfigureFlags flags)
 {
-    qDebug() << "SpotlightEffect::reconfigure()";
     SpotlightConfig::self()->read();
 
     m_animationTime = animationTime(SpotlightConfig::animationTime());
@@ -104,8 +105,6 @@ void SpotlightEffect::reconfigure(ReconfigureFlags flags)
     m_spotlightTexture = GLTexture::upload(image);
     m_spotlightTexture->setWrapMode(GL_CLAMP_TO_EDGE);
     m_spotlightTexture->setFilter(GL_LINEAR);
-
-    qDebug() << "SpotlightEffect::reconfigure() success";
 }
 
 bool SpotlightEffect::isActive() const
@@ -121,7 +120,6 @@ void SpotlightEffect::pointerEvent(MouseEvent *event)
 
     if (const auto shakeFactor = m_shakeDetector.update(event)) {
         if (!m_isActive) {
-            qDebug() << "SpotlightEffect::activated";
             m_isActive = true;
             updateMaxScale();
             qreal start = 1.0;
@@ -155,8 +153,6 @@ void SpotlightEffect::paintScreen(const RenderTarget &renderTarget, const Render
 
     QRectF screenGeometry = screen->geometry();
 
-    // qDebug() << "SpotlightEffect::paintScreen() cursorPos" << center << "screenGeometry" << screenGeometry;
-
     center -= screenGeometry.topLeft();
 
     qreal scale = 1 / (m_animationValue * m_maxScale + 1 - m_animationValue);
@@ -174,8 +170,6 @@ void SpotlightEffect::paintScreen(const RenderTarget &renderTarget, const Render
 
     const bool clipping = region != infiniteRegion();
     const QRegion clipRegion = clipping ? viewport.mapToRenderTarget(region) : infiniteRegion();
-
-    // qDebug() << "SpotlightEffect::paintScreen() center" << center << "scale" << 1 / scale << "source" << source << "fullscreen" << fullscreen << "clipping" << clipping << "clipRegion" << clipRegion;
 
     if (clipping) {
         glEnable(GL_SCISSOR_TEST);
