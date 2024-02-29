@@ -1,6 +1,6 @@
 # kwin-effect-spotlight
 "Find My Mouse" effect "Spotlight"
-![Demo](https://jinliu.github.io/kwin-effect-spotlight/Screencast.webm)
+[Demo](https://jinliu.github.io/kwin-effect-spotlight/Screencast.webm)
 
 ## Requirements
 
