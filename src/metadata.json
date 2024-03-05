@@ -4,7 +4,6 @@
         "Description": "Spotlight on the pointer when it is quickly moved back and forth",
         "EnabledByDefault": false,
         "License": "GPL",
-        "Id": "spotlight.jinliu.github.com",
         "Name": "Spotlight"
     },
     "X-KDE-ConfigModule": "kwin_spotlight_config"
