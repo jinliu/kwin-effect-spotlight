@@ -4,7 +4,7 @@
 
 ## Requirements
 
-KDE Plasma 6.0
+KDE Plasma 6.0 (Wayland session)
 
 ## Installation
 
