@@ -72,7 +72,7 @@ void SpotlightEffect::reconfigure(ReconfigureFlags flags)
 {
     SpotlightConfig::self()->read();
 
-    m_animationTime = animationTime(SpotlightConfig::animationTime());
+    m_animationTime = animationTime(std::chrono::milliseconds(SpotlightConfig::animationTime()));
     m_effectTimeout = SpotlightConfig::effectTimeout();
     m_spotlightRadius = SpotlightConfig::spotlightRadius();
 
