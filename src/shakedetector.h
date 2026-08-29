@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include <QMouseEvent>
+#include "input_event.h"
 
 #include <deque>
 #include <optional>
@@ -23,10 +23,10 @@ class ShakeDetector
 public:
     ShakeDetector();
 
-    std::optional<qreal> update(QMouseEvent *event);
+    std::optional<qreal> update(KWin::PointerMotionEvent *event);
 
-    quint64 interval() const;
-    void setInterval(quint64 interval);
+    std::chrono::milliseconds interval() const;
+    void setInterval(std::chrono::milliseconds interval);
 
     qreal sensitivity() const;
     void setSensitivity(qreal sensitivity);
@@ -35,10 +35,10 @@ private:
     struct HistoryItem
     {
         QPointF position;
-        quint64 timestamp;
+        std::chrono::microseconds timestamp;
     };
 
     std::deque<HistoryItem> m_history;
-    quint64 m_interval = 1000;
+    std::chrono::milliseconds m_interval = std::chrono::milliseconds(1000);
     qreal m_sensitivity = 4;
 };

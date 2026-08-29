@@ -53,6 +53,8 @@ SpotlightEffect::SpotlightEffect()
 
     SpotlightConfig::instance(effects->config());
     reconfigure(ReconfigureAll);
+
+    qWarning() << "SpotlightEffect initialized";
 }
 
 SpotlightEffect::~SpotlightEffect()
@@ -61,22 +63,20 @@ SpotlightEffect::~SpotlightEffect()
 
 bool SpotlightEffect::supported()
 {
-    return 
-#ifdef KWIN_6_1
-        effects->isWayland() &&
-#endif
-        effects->isOpenGLCompositing();
+    return effects->isOpenGLCompositing();
 }
 
 void SpotlightEffect::reconfigure(ReconfigureFlags flags)
 {
+    Q_UNUSED(flags);
+
     SpotlightConfig::self()->read();
 
-    m_animationTime = animationTime(std::chrono::milliseconds(SpotlightConfig::animationTime()));
+    m_animationTime = animationTime(std::chrono::milliseconds(SpotlightConfig::animationTime())).count();
     m_effectTimeout = SpotlightConfig::effectTimeout();
     m_spotlightRadius = SpotlightConfig::spotlightRadius();
 
-    m_shakeDetector.setInterval(SpotlightConfig::timeInterval());
+    m_shakeDetector.setInterval(std::chrono::milliseconds(SpotlightConfig::timeInterval()));
     m_shakeDetector.setSensitivity(SpotlightConfig::sensitivity());
 
     const int imageSize = (m_spotlightRadius + TEXTURE_PADDING) * 2;
@@ -112,13 +112,10 @@ bool SpotlightEffect::isActive() const
     return m_isActive || m_outAnimation.state() == QVariantAnimation::Running;
 }
 
-void SpotlightEffect::pointerEvent(MouseEvent *event)
+void SpotlightEffect::pointerMotion(PointerMotionEvent *event)
 {
-    if (event->type() != QEvent::MouseMove) {
-        return;
-    }
-
     if (const auto shakeFactor = m_shakeDetector.update(event)) {
+        qWarning() << "Shake factor detected:" << shakeFactor;
         if (!m_isActive) {
             m_isActive = true;
             updateMaxScale();
@@ -131,6 +128,7 @@ void SpotlightEffect::pointerEvent(MouseEvent *event)
             m_inAnimation.setEndValue(0.0);
             m_inAnimation.setDuration(m_animationTime * start);
             m_inAnimation.start();
+            qWarning() << "Spotlight activated";
         } else if (m_effectStopTimer.isActive()) {
             m_effectStopTimer.start(m_effectTimeout);
         }
@@ -141,9 +139,9 @@ void SpotlightEffect::pointerEvent(MouseEvent *event)
     }
 }
 
-void SpotlightEffect::paintScreen(const RenderTarget &renderTarget, const RenderViewport &viewport, int mask, const QRegion &region, Output *screen)
+void SpotlightEffect::paintScreen(const RenderTarget &renderTarget, const RenderViewport &viewport, int mask, const Region &deviceRegion, LogicalOutput *screen)
 {
-    effects->paintScreen(renderTarget, viewport, mask, region, screen);
+    effects->paintScreen(renderTarget, viewport, mask, deviceRegion, screen);
 
     QPointF center = cursorPos();
 
@@ -151,37 +149,32 @@ void SpotlightEffect::paintScreen(const RenderTarget &renderTarget, const Render
         return;
     }
 
-    QRectF screenGeometry = screen->geometry();
+    Rect screenGeometry = screen->geometry();
 
     center -= screenGeometry.topLeft();
 
     qreal scale = 1 / (m_animationValue * m_maxScale + 1 - m_animationValue);
-    QRectF source = QRectF(-center.x() * scale + TEXTURE_PADDING + m_spotlightRadius,
+    Rect source = Rect(-center.x() * scale + TEXTURE_PADDING + m_spotlightRadius,
                            -center.y() * scale + TEXTURE_PADDING + m_spotlightRadius,
                            screenGeometry.width() * scale,
                            screenGeometry.height() * scale);
-    QRectF fullscreen(screenGeometry.topLeft() * viewport.scale(), screenGeometry.size() * viewport.scale());
+    Rect fullscreen(screenGeometry.topLeft() * viewport.scale(), screenGeometry.size() * viewport.scale());
 
     auto shader = ShaderManager::instance()->pushShader(ShaderTrait::MapTexture | ShaderTrait::TransformColorspace);
-    shader->setColorspaceUniformsFromSRGB(renderTarget.colorDescription());
+    shader->setColorspaceUniforms(ColorDescription::sRGB, renderTarget.colorDescription(), RenderingIntent::Perceptual);
     QMatrix4x4 mvp = viewport.projectionMatrix();
     mvp.translate(fullscreen.x(), fullscreen.y());
     shader->setUniform(GLShader::Mat4Uniform::ModelViewProjectionMatrix, mvp);
 
-    const bool clipping = region != infiniteRegion();
-    const QRegion clipRegion = clipping ? viewport.mapToRenderTarget(region) : infiniteRegion();
+    const Region clipRegion = viewport.mapToRenderTarget(deviceRegion);
 
-    if (clipping) {
-        glEnable(GL_SCISSOR_TEST);
-    }
+    glEnable(GL_SCISSOR_TEST);
     glEnable(GL_BLEND);
     glBlendColor(0.0f, 0.0f, 0.0f, 0.5f * (1.0f - m_animationValue));
     glBlendFunc(GL_CONSTANT_ALPHA, GL_ONE_MINUS_CONSTANT_ALPHA);
-    m_spotlightTexture->render(source, clipRegion, fullscreen.size(), clipping);
+    m_spotlightTexture->render(source, clipRegion, fullscreen.size(), true);
     glDisable(GL_BLEND);
-    if (clipping) {
-        glDisable(GL_SCISSOR_TEST);
-    }
+    glDisable(GL_SCISSOR_TEST);
 
     ShaderManager::instance()->popShader();
 }
@@ -189,7 +182,7 @@ void SpotlightEffect::paintScreen(const RenderTarget &renderTarget, const Render
 void SpotlightEffect::updateMaxScale()
 {
     QPointF center = cursorPos();
-    QRectF screenGeometry = effects->screenAt(center.toPoint())->geometry();
+    RectF screenGeometry = effects->screenAt(center.toPoint())->geometry();
     center -= screenGeometry.topLeft();
     qreal x = qMax(center.x(), screenGeometry.width() - center.x());
     qreal y = qMax(center.y(), screenGeometry.height() - center.y());

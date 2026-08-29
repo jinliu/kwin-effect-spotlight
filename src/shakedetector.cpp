@@ -12,12 +12,12 @@ ShakeDetector::ShakeDetector()
 {
 }
 
-quint64 ShakeDetector::interval() const
+std::chrono::milliseconds ShakeDetector::interval() const
 {
     return m_interval;
 }
 
-void ShakeDetector::setInterval(quint64 interval)
+void ShakeDetector::setInterval(std::chrono::milliseconds interval)
 {
     m_interval = interval;
 }
@@ -32,12 +32,12 @@ void ShakeDetector::setSensitivity(qreal sensitivity)
     m_sensitivity = sensitivity;
 }
 
-std::optional<qreal> ShakeDetector::update(QMouseEvent *event)
+std::optional<qreal> ShakeDetector::update(KWin::PointerMotionEvent *event)
 {
     // Prune the old entries in the history.
     auto it = m_history.begin();
     for (; it != m_history.end(); ++it) {
-        if (event->timestamp() - it->timestamp < m_interval) {
+        if (event->timestamp - it->timestamp < m_interval) {
             break;
         }
     }
@@ -46,8 +46,8 @@ std::optional<qreal> ShakeDetector::update(QMouseEvent *event)
     }
 
     m_history.emplace_back(HistoryItem{
-        .position = event->localPos(),
-        .timestamp = event->timestamp(),
+        .position = event->position,
+        .timestamp = event->timestamp,
     });
 
     qreal left = m_history[0].position.x();
@@ -72,11 +72,13 @@ std::optional<qreal> ShakeDetector::update(QMouseEvent *event)
     const qreal boundsWidth = right - left;
     const qreal boundsHeight = bottom - top;
     const qreal diagonal = std::sqrt(boundsWidth * boundsWidth + boundsHeight * boundsHeight);
+    qWarning() << "Diagonal of mouse path:" << diagonal;
     if (diagonal < 100) {
         return std::nullopt;
     }
 
     const qreal shakeFactor = distance / diagonal;
+    qWarning() << "Shake factor:" << shakeFactor;
     if (shakeFactor > m_sensitivity) {
         return shakeFactor - m_sensitivity;
     }

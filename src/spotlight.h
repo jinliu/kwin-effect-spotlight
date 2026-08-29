@@ -32,9 +32,9 @@ public:
     static bool supported();
 
     void reconfigure(ReconfigureFlags flags) override;
-    void pointerEvent(MouseEvent *event) override;
+    void pointerMotion(PointerMotionEvent *event) override;
     bool isActive() const override;
-    void paintScreen(const RenderTarget &renderTarget, const RenderViewport &viewport, int mask, const QRegion &region, Output *screen) override;
+    void paintScreen(const RenderTarget &renderTarget, const RenderViewport &viewport, int mask, const Region &deviceRegion, LogicalOutput *screen) override;
 
 private:
     void updateMaxScale();
