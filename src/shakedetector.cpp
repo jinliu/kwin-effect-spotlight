@@ -72,13 +72,11 @@ std::optional<qreal> ShakeDetector::update(KWin::PointerMotionEvent *event)
     const qreal boundsWidth = right - left;
     const qreal boundsHeight = bottom - top;
     const qreal diagonal = std::sqrt(boundsWidth * boundsWidth + boundsHeight * boundsHeight);
-    qWarning() << "Diagonal of mouse path:" << diagonal;
     if (diagonal < 100) {
         return std::nullopt;
     }
 
     const qreal shakeFactor = distance / diagonal;
-    qWarning() << "Shake factor:" << shakeFactor;
     if (shakeFactor > m_sensitivity) {
         return shakeFactor - m_sensitivity;
     }

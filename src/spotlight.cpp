@@ -53,8 +53,6 @@ SpotlightEffect::SpotlightEffect()
 
     SpotlightConfig::instance(effects->config());
     reconfigure(ReconfigureAll);
-
-    qWarning() << "SpotlightEffect initialized";
 }
 
 SpotlightEffect::~SpotlightEffect()
@@ -115,7 +113,6 @@ bool SpotlightEffect::isActive() const
 void SpotlightEffect::pointerMotion(PointerMotionEvent *event)
 {
     if (const auto shakeFactor = m_shakeDetector.update(event)) {
-        qWarning() << "Shake factor detected:" << shakeFactor;
         if (!m_isActive) {
             m_isActive = true;
             updateMaxScale();
@@ -128,7 +125,6 @@ void SpotlightEffect::pointerMotion(PointerMotionEvent *event)
             m_inAnimation.setEndValue(0.0);
             m_inAnimation.setDuration(m_animationTime * start);
             m_inAnimation.start();
-            qWarning() << "Spotlight activated";
         } else if (m_effectStopTimer.isActive()) {
             m_effectStopTimer.start(m_effectTimeout);
         }
